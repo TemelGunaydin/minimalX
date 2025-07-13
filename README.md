@@ -2,6 +2,10 @@
 
 A minimal, developer-friendly Neovim color scheme designed for dark mode with customizable colors.
 
+![MinimalX Theme Preview](theme.jpg)
+
+*Theme preview showing how MinimalX looks with Swift code*
+
 ## Features
 
 - **Minimal Design**: Clean, distraction-free interface
