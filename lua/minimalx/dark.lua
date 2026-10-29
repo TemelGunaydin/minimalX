@@ -1,332 +1,374 @@
-local u = require('minimalx.utils')
-local hl = u.highlight
+local hl = require("minimalx.utils").highlight
 
 local M = {}
 
--- Define background and foreground colors as variables for easy modification
-local bg_color = "#1a1a1a"  -- Darker background for better contrast with teal
-local fg_color = "#22a6b3"
-local visual_color = "#4a4a4a"  -- Slightly lighter than background for visual selection
-local telescope_selection_color = "#555555"  -- Lighter gray for telescope selection
-local comment_color = "#666666"  -- Gray color for comments
-local line_number_color = "#444444"  -- Medium gray for line numbers
+-- A quiet charcoal canvas with a small, muted set of semantic accents.
+local c = {
+    bg = "#171c1e",
+    bg_alt = "#1c2426",
+    bg_float = "#202a2c",
+    cursorline = "#222d2f",
+    selection = "#334b4c",
+    border = "#405453",
+    fg = "#d2dfdc",
+    muted = "#9aadaa",
+    comment = "#899b98",
+    line_number = "#7b8f8c",
+    subtle = "#4b615e",
+    teal = "#7fc8bd",
+    green = "#a9c7a0",
+    blue = "#9ab9ca",
+    purple = "#b9accc",
+    amber = "#d9bf8c",
+    red = "#df9692",
+    bright_red = "#edaaa5",
+    bright_green = "#bed9b5",
+    bright_amber = "#e8d3a5",
+    bright_blue = "#afccdb",
+    bright_purple = "#cbbfe0",
+    bright_teal = "#9bdcd2",
+    diff_add = "#23362d",
+    diff_change = "#26343e",
+    diff_delete = "#3b292c",
+    diff_text = "#354c59",
+}
 
-local set_terminal_color = function()
-    vim.g.terminal_color_0 = bg_color
-    vim.g.terminal_color_1 = fg_color
-    vim.g.terminal_color_2 = fg_color
-    vim.g.terminal_color_3 = fg_color
-    vim.g.terminal_color_4 = fg_color
-    vim.g.terminal_color_5 = fg_color
-    vim.g.terminal_color_6 = fg_color
-    vim.g.terminal_color_7 = fg_color
-    vim.g.terminal_color_8 = fg_color
-    vim.g.terminal_color_9 = fg_color
-    vim.g.terminal_color_10 = fg_color
-    vim.g.terminal_color_11 = fg_color
-    vim.g.terminal_color_12 = fg_color
-    vim.g.terminal_color_13 = fg_color
-    vim.g.terminal_color_14 = fg_color
-    vim.g.terminal_color_15 = fg_color
-    vim.g.terminal_color_background = bg_color
-    vim.g.terminal_color_foreground = fg_color
-end
+function M.set()
+    local terminal = {
+        c.bg_alt, c.red, c.green, c.amber, c.blue, c.purple, c.teal, c.fg,
+        c.comment, c.bright_red, c.bright_green, c.bright_amber,
+        c.bright_blue, c.bright_purple, c.bright_teal, "#edf4f1",
+    }
+    for index, color in ipairs(terminal) do
+        vim.g["terminal_color_" .. (index - 1)] = color
+    end
+    vim.g.terminal_color_background = c.bg
+    vim.g.terminal_color_foreground = c.fg
 
-M.set = function()
-    set_terminal_color()
+    local groups = {
+        -- Editor surfaces and interaction states.
+        Normal = { fg = c.fg, bg = c.bg },
+        NormalNC = { link = "Normal" },
+        NormalFloat = { fg = c.fg, bg = c.bg_float },
+        FloatBorder = { fg = c.border, bg = c.bg_float },
+        FloatTitle = { fg = c.teal, bg = c.bg_float, bold = true },
+        ColorColumn = { bg = c.bg_alt },
+        Cursor = { fg = c.bg, bg = c.teal },
+        CursorLine = { bg = c.cursorline },
+        CursorColumn = { link = "CursorLine" },
+        CursorLineNr = { fg = c.teal, bold = true },
+        CursorLineSign = { bg = c.cursorline },
+        Directory = { fg = c.teal },
+        EndOfBuffer = { fg = c.bg },
+        WinSeparator = { fg = c.border },
+        VertSplit = { link = "WinSeparator" },
+        Folded = { fg = c.muted, bg = c.bg_alt },
+        FoldColumn = { fg = c.line_number, bg = c.bg },
+        SignColumn = { bg = c.bg },
+        LineNr = { fg = c.line_number },
+        LineNrAbove = { link = "LineNr" },
+        LineNrBelow = { link = "LineNr" },
+        MatchParen = { fg = c.teal, bg = c.selection, bold = true },
+        ModeMsg = { fg = c.teal, bold = true },
+        MoreMsg = { fg = c.teal },
+        NonText = { fg = c.subtle },
+        SpecialKey = { link = "NonText" },
+        Whitespace = { link = "NonText" },
+        Conceal = { fg = c.muted },
+        Pmenu = { fg = c.fg, bg = c.bg_float },
+        PmenuSel = { fg = c.fg, bg = c.selection, bold = true },
+        PmenuSbar = { bg = c.bg_alt },
+        PmenuThumb = { bg = c.border },
+        PmenuMatch = { fg = c.teal, bold = true },
+        PmenuMatchSel = { fg = c.teal, bg = c.selection, bold = true },
+        PmenuKind = { fg = c.muted, bg = c.bg_float },
+        PmenuExtra = { link = "PmenuKind" },
+        Question = { fg = c.teal },
+        Search = { fg = c.bg, bg = c.amber },
+        IncSearch = { fg = c.bg, bg = c.teal, bold = true },
+        CurSearch = { link = "IncSearch" },
+        Substitute = { fg = c.bg, bg = c.red },
+        StatusLine = { fg = c.fg, bg = c.bg_float },
+        StatusLineNC = { fg = c.comment, bg = c.bg_alt },
+        TabLine = { fg = c.muted, bg = c.bg_alt },
+        TabLineFill = { bg = c.bg },
+        TabLineSel = { fg = c.teal, bg = c.bg_float, bold = true },
+        Title = { fg = c.teal, bold = true },
+        Visual = { bg = c.selection },
+        VisualNOS = { link = "Visual" },
+        WildMenu = { link = "PmenuSel" },
+        QuickFixLine = { link = "PmenuSel" },
+        ErrorMsg = { fg = c.red, bold = true },
+        WarningMsg = { fg = c.amber },
 
-    -- UI highlight
-    hl('Normal', { fg = fg_color, bg = bg_color })
-    hl('NormalFloat', { fg = fg_color, bg = bg_color })
-    hl('FloatBorder', { fg = fg_color, bg = bg_color })
-    hl('ColorColumn', { bg = bg_color })
-    hl('Cursor', { fg = bg_color, bg = fg_color })
-    hl('CursorLine', { bg = bg_color })
-    hl('CursorColumn', { bg = bg_color })
-    hl('Directory', { fg = fg_color, bg = bg_color })
-    hl('DiffAdd', { fg = fg_color, bg = bg_color })
-    hl('DiffChange', { fg = fg_color, bg = bg_color })
-    hl('DiffDelete', { fg = fg_color, bg = bg_color })
-    hl('DiffText', { fg = fg_color, bg = bg_color })
-    hl('EndOfBuffer', { fg = bg_color, bg = bg_color })
-    hl('ErrorMsg', { fg = fg_color, bg = bg_color, underline = true })
-    hl('VertSplit', { fg = fg_color, bg = bg_color })
-    hl('WinSeparator', { link = 'VertSplit' })
-    hl('Folded', { fg = fg_color, bg = bg_color })
-    hl('FoldColumn', { fg = fg_color, bg = bg_color })
-    hl('SignColumn', { fg = fg_color, bg = bg_color })
-    hl('IncSearch', { fg = bg_color, bg = fg_color })
-    hl('LineNr', { fg = line_number_color, bg = bg_color })
-    hl('CursorLineNr', { fg = line_number_color, bg = bg_color })
-    hl('MatchParen', { fg = fg_color })
-    hl('ModeMsg', { fg = fg_color, bg = bg_color })
-    hl('MoreMsg', { fg = fg_color, bg = bg_color })
-    hl('NonText', { fg = fg_color })
-    hl('Pmenu', { fg = fg_color, bg = bg_color })
-    hl('PmenuSel', { fg = fg_color, bg = bg_color })
-    hl('PmenuSbar', { bg = bg_color })
-    hl('PmenuThumb', { bg = bg_color })
-    hl('Question', { fg = fg_color, bg = bg_color })
-    hl('Search', { fg = bg_color, bg = fg_color })
-    hl('SpecialKey', { fg = fg_color, bg = bg_color })
-    hl('StatusLine', { fg = fg_color, bg = bg_color })
-    hl('StatusLineNC', { fg = fg_color, bg = bg_color })
-    hl('Tabline', { fg = fg_color, bg = bg_color })
-    hl('TablineFill', { fg = fg_color, bg = bg_color })
-    hl('TablineSel', { fg = fg_color, bg = bg_color })
-    hl('Title', { fg = fg_color })
-    hl('Visual', { bg = visual_color })
-    hl('VisualNOS', { bg = visual_color })
-    hl('WarningMsg', { fg = fg_color })
-    hl('WildMenu', { fg = fg_color, bg = bg_color })
+        -- Classic syntax is also the source of truth for parser/LSP links.
+        Comment = { fg = c.comment, italic = true },
+        Constant = { fg = c.amber },
+        String = { fg = c.green },
+        Character = { link = "String" },
+        Number = { link = "Constant" },
+        Boolean = { link = "Constant" },
+        Float = { link = "Number" },
+        Identifier = { fg = c.fg },
+        Function = { fg = c.teal },
+        Statement = { fg = c.purple },
+        Conditional = { link = "Statement" },
+        Repeat = { link = "Statement" },
+        Label = { link = "Statement" },
+        Operator = { fg = c.muted },
+        Keyword = { link = "Statement" },
+        Exception = { link = "Statement" },
+        PreProc = { fg = c.purple },
+        Include = { link = "PreProc" },
+        Define = { link = "PreProc" },
+        Macro = { link = "PreProc" },
+        PreCondit = { link = "PreProc" },
+        Type = { fg = c.blue },
+        StorageClass = { link = "Keyword" },
+        Structure = { link = "Type" },
+        Typedef = { link = "Type" },
+        Special = { fg = c.teal },
+        SpecialChar = { fg = c.amber },
+        Tag = { link = "Type" },
+        Delimiter = { fg = c.muted },
+        SpecialComment = { link = "Comment" },
+        Debug = { link = "Special" },
+        Underlined = { fg = c.teal, underline = true },
+        Ignore = { fg = c.comment },
+        Error = { fg = c.red, underline = true },
+        SpellBad = { sp = c.red, undercurl = true },
+        SpellCap = { sp = c.amber, undercurl = true },
+        SpellRare = { sp = c.purple, undercurl = true },
+        SpellLocal = { sp = c.teal, undercurl = true },
+        Todo = { fg = c.amber, bold = true },
 
-    -- Syntax highlight - all using the same colors
-    hl('Comment', { fg = comment_color })
-    hl('Constant', { fg = fg_color })
-    hl('String', { fg = fg_color })
-    hl('Character', { fg = fg_color })
-    hl('Number', { fg = fg_color })
-    hl('Boolean', { fg = fg_color })
-    hl('Float', { fg = fg_color })
-    hl('Identifier', { fg = fg_color })
-    hl('Function', { fg = fg_color })
-    hl('Statement', { fg = fg_color })
-    hl('Conditional', { fg = fg_color })
-    hl('Repeat', { fg = fg_color })
-    hl('Label', { fg = fg_color })
-    hl('Operator', { fg = fg_color })
-    hl('Keyword', { fg = fg_color })
-    hl('Exception', { fg = fg_color })
-    hl('PreProc', { fg = fg_color })
-    hl('Include', { fg = fg_color })
-    hl('Define', { fg = fg_color })
-    hl('Macro', { fg = fg_color })
-    hl('PreCondit', { fg = fg_color })
-    hl('Type', { fg = fg_color })
-    hl('StorageClass', { fg = fg_color })
-    hl('Structure', { fg = fg_color })
-    hl('TypeDef', { fg = fg_color })
-    hl('Special', { fg = fg_color })
-    hl('SpecialChar', { fg = fg_color })
-    hl('Tag', { fg = fg_color })
-    hl('Delimiter', { fg = fg_color })
-    hl('SpecialComment', { fg = comment_color })
-    hl('Debug', { fg = fg_color })
-    hl('Underlined', { underline = true })
-    hl('Ignore', { fg = fg_color })
-    hl('Error', { fg = fg_color, underline = true })
-    hl('SpellBad', { fg = fg_color, underline = true, sp = fg_color })
-    hl('SpellCap', { fg = fg_color, underline = true, sp = fg_color })
-    hl('SpellRare', { fg = fg_color, underline = true, sp = fg_color })
-    hl('SpellLocale', { fg = fg_color, underline = true, sp = fg_color })
-    hl('Todo', { fg = fg_color })
-    hl('Whitespace', { fg = fg_color })
+        DiffAdd = { bg = c.diff_add },
+        DiffChange = { bg = c.diff_change },
+        DiffDelete = { fg = c.red, bg = c.diff_delete },
+        DiffText = { bg = c.diff_text, bold = true },
+        Added = { fg = c.green },
+        Changed = { fg = c.blue },
+        Removed = { fg = c.red },
+        LspReferenceText = { bg = c.selection },
+        LspReferenceRead = { link = "LspReferenceText" },
+        LspReferenceWrite = { bg = c.selection, underline = true },
+        LspSignatureActiveParameter = { fg = c.amber, bold = true },
+        LspCodeLens = { fg = c.comment },
+        LspInlayHint = { fg = c.comment, bg = c.bg_alt },
 
-    --- Treesitter highlight - all using the same colors
-    hl('@error', { fg = fg_color })
-    hl('@text.literal', { fg = fg_color })
-    hl('@text.literal.markdown', { fg = fg_color })
-    hl('@text.literal.markdown.inline', { fg = fg_color })
-    hl('@text.title', { fg = fg_color })
-    hl('@text.emphasis', { fg = fg_color })
-    hl('@text.strong', { fg = fg_color })
-    hl('@text.uri', { fg = fg_color, underline = true })
-    hl('@textReference', { fg = fg_color })
-    hl('@text.underline', { underline = true })
-    hl('@text.todo', { fg = fg_color })
-    hl('@text.note', { fg = fg_color })
-    hl('@text.warning', { fg = fg_color })
-    hl('@text.danger', { fg = fg_color })
-    hl('@comment', { fg = comment_color })
-    hl('@punctuation', { fg = fg_color })
-    hl('@punctuation.special', { fg = fg_color })
-    hl('@punctuation.bracket', { fg = fg_color })
-    hl('@punctuation.delimiter', { fg = fg_color })
-    hl('@constant', { fg = fg_color })
-    hl('@constant.builtin', { fg = fg_color })
-    hl('@constant.macro', { fg = fg_color })
-    hl('@define', { fg = fg_color })
-    hl('@macro', { fg = fg_color })
-    hl('@string', { fg = fg_color })
-    hl('@string.escape', { fg = fg_color })
-    hl('@stringEscape', { fg = fg_color })
-    hl('@string.special', { fg = fg_color })
-    hl('@string.regex', { fg = fg_color })
-    hl('@character', { fg = fg_color })
-    hl('@character.special', { fg = fg_color })
-    hl('@number', { fg = fg_color })
-    hl('@boolan', { fg = fg_color })
-    hl('@float', { fg = fg_color })
-    hl('@function', { fg = fg_color })
-    hl('@function.method.call', { fg = fg_color })
-    hl('@function.builtin', { fg = fg_color })
-    hl('@function.macro', { fg = fg_color })
-    hl('@attribute', { fg = fg_color })
-    hl('@annotation', { fg = fg_color })
-    hl('@parameter', { fg = fg_color })
-    hl('@parameter.reference', { fg = fg_color })
-    hl('@method', { fg = fg_color })
-    hl('@method.call', { fg = fg_color })
-    hl('@field', { fg = fg_color })
-    hl('@property', { fg = fg_color })
-    hl('@constructor', { fg = fg_color })
-    hl('@conditional', { fg = fg_color })
-    hl('@repeat', { fg = fg_color })
-    hl('@label', { fg = fg_color })
-    hl('@operator', { fg = fg_color })
-    hl('@keyword', { fg = fg_color })
-    hl('@keyword.function', { fg = fg_color })
-    hl('@keyword.operator', { fg = fg_color })
-    hl('@exception', { fg = fg_color })
-    hl('@variable', { fg = fg_color })
-    hl('@variable.builtin', { fg = fg_color })
-    hl('@variable.parameter', { fg = fg_color })
-    hl('@variable.other', { fg = fg_color })
-    hl('@type', { fg = fg_color })
-    hl('@type.builtin', { fg = fg_color })
-    hl('@type.qualifire', { fg = fg_color })
-    hl('@type.definition', { fg = fg_color })
-    hl('@storageclass', { fg = fg_color })
-    hl('@structure', { fg = fg_color })
-    hl('@namespace', { fg = fg_color })
-    hl('@include', { fg = fg_color })
-    hl('@preproc', { fg = fg_color })
-    hl('@debug', { fg = fg_color })
-    hl('@tag', { fg = fg_color })
-    hl('@tag.delimiter', { fg = fg_color })
-    hl('@tag.attribute', { fg = fg_color })
+        -- Optional plugin groups are safe to define without their plugins.
+        TelescopeNormal = { link = "NormalFloat" },
+        TelescopeBorder = { link = "FloatBorder" },
+        TelescopePromptBorder = { link = "FloatBorder" },
+        TelescopeResultsBorder = { link = "FloatBorder" },
+        TelescopePreviewBorder = { link = "FloatBorder" },
+        TelescopeTitle = { link = "FloatTitle" },
+        TelescopeSelection = { link = "PmenuSel" },
+        TelescopeSelectionCaret = { fg = c.teal, bg = c.selection },
+        TelescopeMultiSelection = { fg = c.amber },
+        TelescopeMatching = { fg = c.teal, bold = true },
+        TelescopePromptPrefix = { fg = c.teal },
+        NvimTreeNormal = { fg = c.fg, bg = c.bg_alt },
+        NvimTreeNormalNC = { link = "NvimTreeNormal" },
+        NvimTreeRootFolder = { fg = c.teal, bold = true },
+        NvimTreeFolderIcon = { fg = c.teal },
+        NvimTreeFolderName = { fg = c.blue },
+        NvimTreeEmptyFolderName = { fg = c.muted },
+        NvimTreeOpenedFolderName = { fg = c.teal },
+        NvimTreeWinSeparator = { fg = c.border, bg = c.bg_alt },
+        NvimTreeVertSplit = { link = "NvimTreeWinSeparator" },
+        NvimTreeEndOfBuffer = { fg = c.bg_alt, bg = c.bg_alt },
+        NvimTreeCursorLine = { link = "CursorLine" },
+        BufferLineFill = { bg = c.bg },
+        BufferLineBackground = { fg = c.comment, bg = c.bg_alt },
+        BufferLineBufferSelected = { fg = c.fg, bg = c.bg_float, bold = true },
+        BufferLineIndicatorSelected = { fg = c.teal, bg = c.bg_float },
+        CmpNDocBorder = { link = "FloatBorder" },
+        CmpItemKind = { fg = c.blue },
+        CmpItemAbbrMatch = { fg = c.teal, bold = true },
+        CmpItemAbbrMatchFuzzy = { link = "CmpItemAbbrMatch" },
+        CocHighlightText = { link = "LspReferenceText" },
+        CocHighlightRead = { link = "LspReferenceRead" },
+        CocHighlightWrite = { link = "LspReferenceWrite" },
+        GitSignsAdd = { link = "Added" },
+        GitSignsChange = { link = "Changed" },
+        GitSignsDelete = { link = "Removed" },
+        GitSignsAddLn = { link = "DiffAdd" },
+        GitSignsChangeLn = { link = "DiffChange" },
+        GitSignsDeleteLn = { link = "DiffDelete" },
+        GitSignsCurrentLineBlame = { fg = c.comment, italic = true },
+        SnacksPicker = { link = "NormalFloat" },
+        SnacksPickerBorder = { link = "FloatBorder" },
+        SnacksPickerDir = { fg = c.muted },
+        SnacksPickerDirectory = { fg = c.blue },
+        SnacksIndent = { fg = c.subtle },
+        SnacksIndentScope = { fg = c.teal },
+        SnacksPickerListCursorLine = { link = "PmenuSel" },
+        SnacksPickerPreviewCursorLine = { link = "CursorLine" },
+        CompileModeMessage = { underline = true },
+        CompileModeMessageRow = { fg = c.amber },
+        CompileModeMessageCol = { fg = c.amber },
+        CompileModeError = { fg = c.red },
+        CompileModeWarning = { fg = c.amber },
+        CompileModeInfo = { fg = c.blue },
+        CompileModeCommandOutput = { fg = c.fg },
+        CompileModeDirectoryMessage = { fg = c.blue },
+        CompileModeOutputFile = { fg = c.teal },
+        CompileModeCheckResult = { fg = c.green },
+        CompileModeCheckTarget = { fg = c.teal },
+        CompileModeErrorLocus = { link = "Visual" },
+        BlinkCmpMenu = { link = "Pmenu" },
+        BlinkCmpMenuBorder = { link = "FloatBorder" },
+        BlinkCmpMenuSelection = { link = "PmenuSel" },
+        BlinkCmpScrollBarThumb = { link = "PmenuThumb" },
+        BlinkCmpScrollBarGutter = { link = "PmenuSbar" },
+        BlinkCmpLabel = { fg = c.fg },
+        BlinkCmpLabelMatch = { fg = c.teal, bold = true },
+        BlinkCmpKind = { fg = c.blue },
+        NeogitDiffAdd = { link = "DiffAdd" },
+        NeogitDiffAddHighlight = { link = "DiffAdd" },
+        NeogitDiffDelete = { link = "DiffDelete" },
+        NeogitDiffDeleteHighlight = { link = "DiffDelete" },
+        NeogitDiffContext = { link = "Normal" },
+        NeogitDiffContextHighlight = { link = "CursorLine" },
+        NeogitDiffAddCursor = { fg = c.green, bg = c.diff_add },
+        NeogitDiffContextCursor = { link = "CursorLine" },
+        NeogitDiffDeleteCursor = { fg = c.red, bg = c.diff_delete },
+        typescriptParens = { link = "Delimiter" },
+        htmlTag = { link = "Delimiter" },
+        htmlEndTag = { link = "Delimiter" },
+        htmlTagName = { link = "Tag" },
+        htmlSpecialTagName = { link = "Tag" },
+        htmlArg = { link = "Identifier" },
+    }
 
-    -- LSP semantic tokens
-    hl('@lsp.type.class', { link = '@type' })
-    hl('@lsp.type.decorator', { link = '@function' })
-    hl('@lsp.type.enum', { link = '@structure' })
-    hl('@lsp.type.enumMember', { link = '@property' })
-    hl('@lsp.type.function', { link = '@function' })
-    hl('@lsp.type.interface', { link = '@type' })
-    hl('@lsp.type.macro', { link = '@macro' })
-    hl('@lsp.type.method', { link = '@function' })
-    hl('@lsp.type.namespace', { link = '@namespace' })
-    hl('@lsp.type.parameter', { link = '@parameter' })
-    hl('@lsp.type.property', { link = '@property' })
-    hl('@lsp.type.struct', { link = '@structure' })
-    hl('@lsp.type.type', { link = '@type' })
-    hl('@lsp.type.typeParameter', { link = '@type' })
-    hl('@lsp.type.variable', { link = '@variable' })
-    hl('@lsp.type.keyword', { link = '@keyword' })
+    local captures = {
+        ["@comment"] = "Comment",
+        ["@comment.error"] = "DiagnosticError",
+        ["@comment.warning"] = "DiagnosticWarn",
+        ["@comment.note"] = "DiagnosticInfo",
+        ["@comment.todo"] = "Todo",
+        ["@error"] = "Error",
+        ["@constant"] = "Constant",
+        ["@constant.builtin"] = "Constant",
+        ["@constant.macro"] = "Macro",
+        ["@string"] = "String",
+        ["@string.escape"] = "SpecialChar",
+        ["@string.special"] = "Special",
+        ["@string.regexp"] = "String",
+        ["@string.special.url"] = "Underlined",
+        ["@character"] = "Character",
+        ["@character.special"] = "SpecialChar",
+        ["@boolean"] = "Boolean",
+        ["@number"] = "Number",
+        ["@number.float"] = "Float",
+        ["@variable"] = "Identifier",
+        ["@variable.builtin"] = "Special",
+        ["@variable.parameter"] = "Identifier",
+        ["@variable.member"] = "Identifier",
+        ["@function"] = "Function",
+        ["@function.call"] = "Function",
+        ["@function.builtin"] = "Function",
+        ["@function.macro"] = "Macro",
+        ["@function.method"] = "Function",
+        ["@function.method.call"] = "Function",
+        ["@constructor"] = "Type",
+        ["@keyword"] = "Keyword",
+        ["@keyword.operator"] = "Keyword",
+        ["@keyword.import"] = "Include",
+        ["@keyword.directive"] = "PreProc",
+        ["@operator"] = "Operator",
+        ["@punctuation"] = "Delimiter",
+        ["@punctuation.delimiter"] = "Delimiter",
+        ["@punctuation.bracket"] = "Delimiter",
+        ["@punctuation.special"] = "Special",
+        ["@type"] = "Type",
+        ["@type.builtin"] = "Type",
+        ["@type.definition"] = "Typedef",
+        ["@type.qualifier"] = "Keyword",
+        ["@attribute"] = "PreProc",
+        ["@property"] = "Identifier",
+        ["@module"] = "Type",
+        ["@label"] = "Label",
+        ["@tag"] = "Tag",
+        ["@tag.attribute"] = "Identifier",
+        ["@tag.delimiter"] = "Delimiter",
+        ["@diff.plus"] = "Added",
+        ["@diff.minus"] = "Removed",
+        ["@diff.delta"] = "Changed",
+        ["@markup.heading"] = "Title",
+        ["@markup.raw"] = "String",
+        ["@markup.link"] = "Underlined",
+        ["@markup.link.label"] = "Special",
+        ["@markup.link.url"] = "Underlined",
+        ["@markup.list"] = "Special",
+        ["@markup.list.checked"] = "Added",
+        ["@markup.list.unchecked"] = "Todo",
 
-    hl('@diff.plus', { link = 'DiffAdd' })
-    hl('@diff.minus', { link = 'DiffDelete' })
-    hl('@diff.delta', { link = 'DiffChange' })
+        -- Older Tree-sitter query names used by existing configurations.
+        ["@float"] = "Float",
+        ["@parameter"] = "Identifier",
+        ["@parameter.reference"] = "Identifier",
+        ["@field"] = "Identifier",
+        ["@method"] = "Function",
+        ["@method.call"] = "Function",
+        ["@namespace"] = "Type",
+        ["@conditional"] = "Conditional",
+        ["@repeat"] = "Repeat",
+        ["@exception"] = "Exception",
+        ["@include"] = "Include",
+        ["@preproc"] = "PreProc",
+        ["@define"] = "Define",
+        ["@macro"] = "Macro",
+        ["@storageclass"] = "StorageClass",
+        ["@structure"] = "Structure",
+        ["@debug"] = "Debug",
+        ["@text.literal"] = "String",
+        ["@text.title"] = "Title",
+        ["@text.uri"] = "Underlined",
+        ["@text.reference"] = "Special",
+        ["@text.todo"] = "Todo",
+        ["@text.note"] = "DiagnosticInfo",
+        ["@text.warning"] = "DiagnosticWarn",
+        ["@text.danger"] = "DiagnosticError",
+    }
+    for name, target in pairs(captures) do
+        groups[name] = { link = target }
+    end
+    groups["@markup.strong"] = { bold = true }
+    groups["@markup.italic"] = { italic = true }
+    groups["@markup.underline"] = { underline = true }
+    groups["@markup.strikethrough"] = { strikethrough = true }
+    groups["@text.strong"] = { link = "@markup.strong" }
+    groups["@text.emphasis"] = { link = "@markup.italic" }
+    groups["@text.underline"] = { link = "@markup.underline" }
 
-    hl('@text', { fg = fg_color, bg = 'NONE' })
-    hl('@markup.strong', { fg = fg_color })
-    hl('@markup.italic', { fg = fg_color })
-    hl('@markup.underline', { underline = true })
-    hl('@markup.strikethrough', { strikethrough = true })
-    hl('@markup.heading', { fg = fg_color })
-    hl('@markup.raw', { fg = fg_color, bg = 'NONE' })
-    hl('@markup.raw.markdown', { fg = fg_color, bg = 'NONE' })
-    hl('@markup.raw.markdown_inline', { fg = fg_color, bg = 'NONE' })
-    hl('@markup.link.label', { fg = fg_color })
-    hl('@markup.link.url', { fg = fg_color })
-    hl('@markup.list.markdown', { fg = fg_color })
-    hl('@markup.list.checked', { link = 'Todo' })
-    hl('@markup.list.unchecked', { link = 'Todo' })
-    hl('@textReference', { fg = fg_color })
-    hl('@stringEscape', { fg = fg_color })
+    local semantic_tokens = {
+        class = "Type", decorator = "PreProc", enum = "Type", enumMember = "Constant",
+        event = "Identifier", ["function"] = "Function", interface = "Type", macro = "Macro",
+        method = "Function", namespace = "Type", parameter = "Identifier", property = "Identifier",
+        struct = "Type", type = "Type", typeParameter = "Type", variable = "Identifier", keyword = "Keyword",
+        string = "String", number = "Number", operator = "Operator", comment = "Comment",
+    }
+    for name, target in pairs(semantic_tokens) do
+        groups["@lsp.type." .. name] = { link = target }
+    end
+    groups["@lsp.mod.deprecated"] = { strikethrough = true }
 
-    -- Zig 
-    hl('@function.call.zig', { fg = fg_color })
+    local severities = { Error = c.red, Warn = c.amber, Info = c.blue, Hint = c.teal, Ok = c.green }
+    for severity, color in pairs(severities) do
+        groups["Diagnostic" .. severity] = { fg = color }
+        groups["DiagnosticSign" .. severity] = { fg = color, bg = c.bg }
+        groups["DiagnosticFloating" .. severity] = { fg = color, bg = c.bg_float }
+        groups["DiagnosticVirtualText" .. severity] = { fg = color, bg = c.bg_alt }
+        groups["DiagnosticUnderline" .. severity] = { sp = color, undercurl = true }
+    end
+    groups.DiagnosticDeprecated = { strikethrough = true }
+    groups.DiagnosticUnnecessary = { fg = c.comment }
 
-    -- Typescript fix
-    hl('typescriptParens', { fg = fg_color, bg = 'NONE' })
-    -- A custome thing to make cmp doc border invisible
-    hl('CmpNDocBorder', { fg = fg_color, bg = bg_color })
-
-    hl('htmlTag', { fg = fg_color })
-    hl('htmlEndTag', { fg = fg_color })
-    hl('htmlTagName', { fg = fg_color })
-    hl('htmlSpecialTagName', { fg = fg_color })
-    hl('htmlArg', { fg = fg_color })
-
-    hl('NvimTreeRootFolder', { fg = fg_color })
-    hl('NvimTreeFolderIcon', { fg = fg_color })
-    hl('NvimTreeFolderName', { fg = fg_color })
-    hl('NvimTreeEmptyFolderName', { fg = fg_color })
-    hl('NvimTreeOpenedFolderName', { fg = fg_color })
-    hl('NvimTreeVertSplit', { fg = bg_color, bg = bg_color })
-    hl('NvimTreeNormal', { bg = bg_color })
-    hl('NvimTreeEndOfBuffer', { fg = bg_color, bg = bg_color })
-
-    hl('BufferLineIndicatorSelected', { bg = bg_color })
-    hl('BufferLineFill', { bg = bg_color })
-
-    -- Telescope nvim
-    hl('TelescopePromptBorder', { fg = fg_color })
-    hl('TelescopeResultsBorder', { fg = fg_color })
-    hl('TelescopePreviewBorder', { fg = fg_color })
-    hl('TelescopeNormal', { fg = fg_color })
-    hl('TelescopeSelection', { fg = fg_color, bg = telescope_selection_color })
-    hl('TelescopeMultiSelection', { fg = fg_color })
-    hl('TelescopeMatching', { fg = fg_color })
-    hl('TelescopePromptPrefix', { fg = fg_color })
-
-    hl('LspReferenceText', { bg = fg_color })
-    hl('LspReferenceRead', { bg = fg_color })
-    hl('LspReferenceWrite', { bg = fg_color })
-    hl('DiagnosticError', { fg = fg_color })
-    hl('DiagnosticWarn', { fg = fg_color })
-    hl('DiagnosticHint', { fg = fg_color })
-    hl('DiagnosticInfo', { fg = fg_color })
-
-    hl('CocHighlightText', { bg = fg_color })
-    hl('CocHighlightRead', { bg = fg_color })
-    hl('CocHighlightWrite', { bg = fg_color })
-
-    hl('CmpItemKind', { fg = fg_color })
-
-    hl('GitSignsAddLn', { fg = fg_color, bg = bg_color })
-    hl('GitSignsChangeLn', { fg = fg_color, bg = bg_color })
-    hl('GitSignsCurrentLineBlame', { fg = fg_color })
-
-    hl('SnacksPicker', { link = 'Normal' })
-    hl('SnacksPickerBorder', { link = 'Normal' })
-    hl('SnacksPickerDir', { fg = 'NONE', bg = 'NONE', nocombine = true })
-    hl('SnacksPickerDirectory', { fg = 'NONE', bg = 'NONE', nocombine = true })
-    hl('SnacksIndent', { fg = fg_color, bg = 'NONE', nocombine = true })
-    hl('SnacksPickerListCursorLine', { link = 'PmenuSel' })
-    hl('SnacksPickerPreviewCursorLine', { fg = 'none', bg = 'none', nocombine = true })
-
-    hl('CompileModeMessage', { underline = true })
-    hl('CompileModeMessageRow', { fg = fg_color })
-    hl('CompileModeMessageCol', { fg = fg_color })
-    hl('CompileModeError', { fg = fg_color })
-    hl('CompileModeWarning', { fg = fg_color })
-    hl('CompileModeInfo', { fg = fg_color })
-    hl('CompileModeCommandOutput', { fg = fg_color })
-    hl('CompileModeDirectoryMessage', { fg = fg_color })
-    hl('CompileModeOutputFile', { fg = fg_color })
-    hl('CompileModeCheckResult', { fg = fg_color })
-    hl('CompileModeCheckTarget', { fg = fg_color })
-    hl('CompileModeErrorLocus', { link = 'Visual' })
-
-    hl('BlinkCmpMenu', { link = 'Pmenu' })
-    hl('BlinkCmpMenuBorder', { link = 'FloatBorder' })
-    hl('BlinkCmpMenuSelection', { link = 'PmenuSel' })
-    hl('BlinkCmpScrollBarThumb', { link = 'PmenuThumb' })
-    hl('BlinkCmpScrollBarGutter', { link = 'PmenuSbar' })
-    hl('BlinkCmpLabel', { fg = fg_color, bg = 'NONE' })
-    hl('BlinkCmpLabelMatch', { fg = fg_color, bg = 'NONE' })
-
-    hl('NeogitDiffAdd', { link = 'DiffAdd' })
-    hl('NeogitDiffAddHighlight', { link = 'DiffAdd' })
-    hl('NeogitDiffDelete', { link = 'DiffDelete' })
-    hl('NeogitDiffDeleteHighlight', { link = 'DiffDelete' })
-    hl('NeogitDiffContext', { link = 'Normal' })
-    hl('NeogitDiffContextHighlight', { link = 'Normal' })
-    hl('NeogitDiffAddCursor', { fg = fg_color, bg = bg_color })
-    hl('NeogitDiffContextCursor', { link = 'CursorLine' })
-    hl('NeogitDiffDeleteCursor', { fg = fg_color, bg = bg_color })
+    for name, values in pairs(groups) do
+        hl(name, values)
+    end
 end
 
 return M
